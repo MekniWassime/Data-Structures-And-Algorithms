@@ -16,10 +16,10 @@ BTree create(int m){
 }
 //recherche
 BTree search(BTree tree, int cle){
-    if(BTree == nullptr)
+    if(tree == nullptr)
         return nullptr;
     int i = 0;
-    while(i<tree->nombre && tree->cles[i] < cle)
+    while(i<tree->nombre-1 && tree->cles[i] < cle)
         i++;
     if(tree->cles[i] == cle){
         return tree;
