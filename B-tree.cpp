@@ -29,16 +29,7 @@ BTree search(BTree tree, int cle){
         return search(tree->fils[i+1], cle);
     }
 }
-//insertion
-BTree insert(BTree root, int cle){
-    if(root->nombre == 2*m-1){
-        Btree newTree = create(m);
-        for(int i = m; i < 2*m-1; i++){
-            newTree->cles[i-m] = root->cles[i];
-            newTree->fils[i-m] = root->fils[i];
-        }
-    }
-}
+
 //eclatement
 //    m = 3         nbrCles = 5  nbrPtrs = 6
 //                        [p0 c0 p1 c1 p2 c2 p3 .. .. .. ..]
@@ -56,9 +47,9 @@ void eclaterFils(BTree root, indice){
             newTree->fils[i] = filsTree->fils[i+m];
     filsTree->nombre = m-1; //m = position of median so we r taking keys before the median
     newTree->nombre = m-1;  //nbr cles - m = 2*m-1 - m = m-1
-    for(int i = root->nombre; i < indice; i--) //indice=1 nombre=4 [c0, c1, c2, c3, ..] => [c0, c1, c1, c2, c3] => [c0, median, c1 , c2, c3]
+    for(int i = root->nombre; i > indice; i--) //indice=1 nombre=4 [c0, c1, c2, c3, ..] => [c0, c1, c1, c2, c3] => [c0, median, c1 , c2, c3]
         root->cles[i] = root->cles[i-1];       //                indice=1^   nombre=4^   indice=1^   nombre=4^          ^cles[indice]=median
-    for(int i = root->nombre+1; i < indice + 1; i--) //            [p0, p1, p2, p3, p4, ..] => [p0, p1, newTree, p2, p3, p4]
+    for(int i = root->nombre+1; i > indice + 1; i--) //            [p0, p1, p2, p3, p4, ..] => [p0, p1, newTree, p2, p3, p4]
         root->fils[i] = root->fils[i-1];             //            indice+1=2^ nombre+1=5^              ^fils[indice+1]=newTree        
     root->nombre = root->nombre + 1;                 //  result => [p0, c0, p1, median, newTree, c1, p2, c2, p3, c3, p4]
     root->cles[indice] = filsTree->cles[m]; //median
@@ -124,6 +115,7 @@ void emprunt-droite(BTree root, int indice){
     BTree tDroite = root->fils[indice+1];
     //add key from root to left and get the soon to be orphan child from the right
     tGauche->cles[tGauche->nombre] = root->cles[indice];
+    tGauche->fils[tGauche->nombre + 1] = tDroite->fils[0];
     tGauche->nombre = tGauche->nombre + 1;
     //change the key in root with the leftmost cles from right
     root->cles[index] = tDroite->cles[0];
@@ -136,20 +128,20 @@ void emprunt-droite(BTree root, int indice){
     tDroite->nombre = tDroite->nombre - 1;
 }
 
-//move left elements to right
-void fusion-gauche(BTree root, int indice){
+//move right elements to left
+void fusion-droite(BTree root, int indice){
     BTree tGauche = root->fils[indice-1];
     BTree tDroite = root->fils[indice];
-    //add key from root to right
-    tDroite->cles[tDroite->nombre] = root->cles[indice-1];
-    //add keys and children from left to right
+    //add key from root to left
+    tGuache->cles[tGauche->nombre] = root->cles[indice-1];
+    //add keys and children from right to left
     for(int i = 0; i < tGauche->nombre; i++){
-        tDroite->cles[tDroite->nombre + i + 1] = tGauche->cles[i];
-        tDroite->cles[tDroite->nombre + i + 1] = tGauche->fils[i];
+        tGauche->cles[tGauche->nombre + i + 1] = tDroite->cles[i];
+        tGauche->cles[tGauche->nombre + i + 1] = tDroite->fils[i];
     }
-    tDroite->cles[tDroite->nombre + tGauche->nombre] = tGauche->fils[tGauche->nombre];
-    tDroite->nombre = 2*m-1;
-    free(tGauche);
+    tGauche->cles[tGauche->nombre + tDroite->nombre] = tDroite->fils[tDroite->nombre];
+    tGauche->nombre = 2*m-1;
+    free(tDroite);
     //remove key and child from root
     for(int i = indice-1; i < root->nombre-1; i++){ //we don't need to set the last key as it will be removed when we decrease nombre
         root->cles[i] = root->cles[i+1];
@@ -174,24 +166,11 @@ int supp-pred(BTree root){
 }
 
 BTree supprimer(BTree root, int cle){
-    if(root->nombre == 1){
-        if(root->fils[0] != nullptr){
-            if(root->cles[0]==cle){ //might be the job of supprimer-interne
-                if(root->fils[0]->nombre >= m){
-                    root->cles[0] = supp-pred(root->fils[0]);
-                    return root;
-                }else if(root->fils[1]->nombre >= m){
-                    root->cles[0] = supp-succ(root->fils[1]);
-                    return root;
-                }
-            } 
-            if(root->fils[0]->nombre < m && root->fils[1]->nombre < m){
-                fussion-droite(root,0);
-                BTree temp = root->fils[0];
-                free(root);
-                return supprimer-interne(temp, cle);
-            }
-        }
+    if(root->nombre == 1 && root->fils[0] != nullptr && root->fils[0]->nombre < m && root->fils[1]->nombre < m){
+        fussion-droite(root,0);
+        BTree temp = root->fils[0];
+        free(root);
+        return supprimer-interne(temp, cle);
     }
     return supprimer-interne(root, cle);
 }
